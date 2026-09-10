@@ -427,7 +427,7 @@ export default function MessageThread({ conversationId, conversation, newMessage
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]">
+      <div className="p-2 sm:p-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]">
         {sendError && (
           <div className="mb-2 flex items-center gap-2 text-xs text-[var(--color-status-error)] bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             <AlertCircle size={14} className="flex-shrink-0" />
@@ -443,7 +443,7 @@ export default function MessageThread({ conversationId, conversation, newMessage
         )}
 
         {attachment && (
-          <div className="mx-4 mb-2 p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between shadow-sm">
+          <div className="mb-2 p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-2 text-sm text-blue-700 truncate font-medium">
               <Paperclip size={16} />
               <span className="truncate">{attachment.name}</span>
@@ -456,7 +456,7 @@ export default function MessageThread({ conversationId, conversation, newMessage
 
         {/* Quick Replies Popover */}
         {inputText.startsWith('/') && quickReplies.length > 0 && !isNoteMode && !isWindowClosed && (
-          <div className="mx-4 mb-2 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in slide-in-from-bottom-2 fade-in">
+          <div className="mb-2 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto animate-in slide-in-from-bottom-2 fade-in">
             {quickReplies
               .filter(r => `/${r.shortcut}`.startsWith(inputText.toLowerCase()))
               .map(reply => (
@@ -475,7 +475,7 @@ export default function MessageThread({ conversationId, conversation, newMessage
           </div>
         )}
 
-        <div className={`flex items-end gap-3 border rounded-xl p-2 mx-4 mb-4 focus-within:ring-2 focus-within:ring-emerald-100 focus-within:border-[var(--color-border-focus)] transition-all ${isNoteMode ? 'bg-yellow-50 border-yellow-200' : 'bg-[var(--color-bg-base)] border-[var(--color-border-subtle)]'}`}>
+        <div className="flex items-end gap-2">
           
           <input
             type="file"
@@ -486,73 +486,76 @@ export default function MessageThread({ conversationId, conversation, newMessage
             disabled={isWindowClosed && !isNoteMode}
           />
 
-          {!isNoteMode && (
+          {/* Input Pill */}
+          <div className={`flex-1 flex items-end bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] rounded-3xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-100 focus-within:border-emerald-400 transition-all shadow-sm min-w-0 ${isNoteMode ? 'bg-yellow-50 border-yellow-200 focus-within:border-yellow-400 focus-within:ring-yellow-100' : ''}`}>
+            
             <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isWindowClosed}
-              className={`p-2 rounded-full transition-colors ${isWindowClosed ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)] hover:text-blue-600 hover:bg-blue-50'}`}
-              title="Attach File"
+              onClick={() => setIsNoteMode(!isNoteMode)}
+              className={`p-2.5 sm:p-3 shrink-0 transition-colors ${isNoteMode ? 'text-yellow-600 hover:bg-yellow-100' : 'text-[var(--color-text-secondary)] hover:bg-gray-100'}`}
+              title="Toggle Internal Note"
             >
-              <Paperclip size={20} />
+              <AlertCircle size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
-          )}
 
-          <button
-            onClick={() => setIsNoteMode(!isNoteMode)}
-            className={`p-2 rounded-full transition-colors ${isNoteMode ? 'text-yellow-600 bg-yellow-100' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]'}`}
-            title="Toggle Internal Note"
-          >
-            <AlertCircle size={20} />
-          </button>
-
-          {isWindowClosed && !isNoteMode ? (
-            <div className="flex-1 px-3 py-2 bg-[var(--color-bg-base)] rounded-lg flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] flex-1">
-                <AlertCircle size={16} className="text-red-400 shrink-0" />
-                <span className="truncate text-xs sm:text-sm">Window closed. Send a template:</span>
+            {isWindowClosed && !isNoteMode ? (
+              <div className="flex-1 min-w-0 py-2.5 sm:py-3 flex items-center gap-2 overflow-hidden bg-[var(--color-bg-base)] pr-2">
+                <AlertCircle size={16} className="text-red-400 shrink-0 hidden sm:block" />
+                <span className="truncate text-xs sm:text-sm text-[var(--color-text-secondary)] shrink-0">Closed:</span>
                 <select
-                  className="bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 min-w-32"
+                  className="bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded px-1.5 py-1 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full min-w-0 flex-1 truncate"
                   value={selectedTemplate}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
                   disabled={templates.length === 0}
                 >
                   {templates.length === 0 ? (
-                    <option value="">No approved templates</option>
+                    <option value="">No templates</option>
                   ) : (
                     templates.map((t) => <option key={t.id} value={t.template_name}>{t.template_name}</option>)
                   )}
                 </select>
               </div>
-            </div>
-          ) : (
-            <textarea
-              placeholder={isNoteMode ? "Type an internal note..." : "Type a message... (Shift+Enter for newline)"}
-              value={inputText}
-              onChange={(e) => {
-                setInputText(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                  e.currentTarget.style.height = 'auto';
-                }
-              }}
-              className="flex-1 px-3 py-2 bg-transparent resize-none focus:outline-none text-sm min-h-[40px] max-h-[150px] overflow-y-auto w-full leading-relaxed"
-              rows={1}
-            />
-          )}
+            ) : (
+              <textarea
+                placeholder={isNoteMode ? "Note..." : "Message"}
+                value={inputText}
+                onChange={(e) => {
+                  setInputText(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                    e.currentTarget.style.height = 'auto';
+                  }
+                }}
+                className="flex-1 min-w-0 py-2.5 sm:py-3 bg-transparent resize-none focus:outline-none text-sm sm:text-base min-h-[40px] sm:min-h-[44px] max-h-[120px] overflow-y-auto leading-relaxed [&::-webkit-scrollbar]:hidden"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                rows={1}
+              />
+            )}
+
+            {!isNoteMode && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isWindowClosed}
+                className={`p-2.5 sm:p-3 shrink-0 transition-colors ${isWindowClosed ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)] hover:bg-gray-100 hover:text-[var(--color-text-primary)]'}`}
+                title="Attach File"
+              >
+                <Paperclip size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
+          </div>
 
           <button
             onClick={isWindowClosed && !isNoteMode ? handleSendTemplate : handleSend}
             disabled={((!inputText.trim() && !attachment) && !(isWindowClosed && !isNoteMode)) || isSending || (isWindowClosed && !isNoteMode && !selectedTemplate)}
             title={isNoteMode ? 'Save note' : 'Send message'}
             aria-label={isNoteMode ? 'Save note' : 'Send message'}
-            className={`p-3 mb-1 text-white rounded-full transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 shadow-md flex-shrink-0 ${isNoteMode ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)]'}`}
+            className={`p-2.5 sm:p-3 rounded-full text-white shrink-0 shadow-md transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${isNoteMode ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)]'}`}
           >
-            <Send size={18} className="ml-0.5" />
+            <Send size={20} className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />
           </button>
         </div>
       </div>

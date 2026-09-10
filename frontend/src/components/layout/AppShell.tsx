@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Inbox, Users, LogOut, MessageSquare, Circle, BarChart3, Zap, ShieldAlert, Settings, FileText, Tag as TagIcon } from 'lucide-react';
+import { Inbox, Users, LogOut, MessageSquare, Circle, BarChart3, Zap, ShieldAlert, Settings, FileText, Tag as TagIcon, Menu } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import type { CurrentUser } from '@/types/auth';
 import { useInbox } from '@/context/InboxContext';
@@ -51,21 +51,23 @@ export default function AppShell({ children }: AppShellProps) {
   const [isChecking, setIsChecking] = useState(true);
   const [agentStatus, setAgentStatus] = useState<'ONLINE' | 'BUSY' | 'OFFLINE'>('OFFLINE');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   // Both the desktop and mobile status menus live inside <nav>, so a single
   // ref covers them -- clicking anywhere outside the whole nav (the trigger
   // button included) closes the menu, matching normal dropdown behavior.
   useEffect(() => {
-    if (!showStatusMenu) return;
+    if (!showStatusMenu && !showMobileMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setShowStatusMenu(false);
+        setShowMobileMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showStatusMenu]);
+  }, [showStatusMenu, showMobileMenu]);
 
   // AppShell renders on pages outside InboxProvider (e.g. /admin/team), so this
   // read must tolerate the context not being present.
@@ -141,6 +143,12 @@ export default function AppShell({ children }: AppShellProps) {
   }
 
   const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
+  
+  // For mobile, we only want Inbox, Team, and Settings directly on the bar. 
+  // Everything else goes into the "More" menu.
+  const primaryMobileLabels = ['Inbox', 'Team', 'Settings'];
+  const primaryMobileNavItems = visibleNavItems.filter(item => primaryMobileLabels.includes(item.label));
+  const secondaryMobileNavItems = visibleNavItems.filter(item => !primaryMobileLabels.includes(item.label));
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[var(--color-bg-base)]">
@@ -163,8 +171,8 @@ export default function AppShell({ children }: AppShellProps) {
           <MessageSquare size={20} />
         </Link>
 
-        {/* Nav Items */}
-        <div className="flex md:flex-col items-center justify-around md:justify-start w-full md:w-auto md:flex-1 gap-1 md:gap-2">
+        {/* Desktop Nav Items */}
+        <div className="hidden md:flex flex-col items-center justify-start w-full flex-1 gap-2">
           {visibleNavItems.map((item) => {
             const isActive = pathname?.startsWith(item.href);
             const Icon = item.icon;
@@ -174,20 +182,49 @@ export default function AppShell({ children }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 title={item.label}
-                className={`relative flex flex-col md:flex-row items-center justify-center w-14 h-14 md:w-11 md:h-11 rounded-xl transition-colors ${
+                className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-colors ${
                   isActive
                     ? 'text-[var(--color-brand-primary)]'
                     : 'text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)]'
                 }`}
               >
-                <div className={`p-1.5 md:p-2 rounded-xl flex items-center justify-center ${isActive ? 'bg-emerald-50' : 'bg-transparent'}`}>
-                  <Icon size={20} className="md:w-5 md:h-5 w-6 h-6" />
+                <div className={`p-2 rounded-xl flex items-center justify-center ${isActive ? 'bg-emerald-50' : 'bg-transparent'}`}>
+                  <Icon size={20} className="w-5 h-5" />
                 </div>
-                {/* Text label only on mobile to feel native */}
-                <span className="text-[10px] font-semibold mt-0.5 md:hidden">{item.mobileLabel ?? item.label}</span>
+                {isInbox && totalUnreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse-subtle">
+                    {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Mobile Nav Items */}
+        <div className="flex md:hidden items-center justify-around w-full gap-1">
+          {primaryMobileNavItems.map((item) => {
+            const isActive = pathname?.startsWith(item.href);
+            const Icon = item.icon;
+            const isInbox = item.label === 'Inbox';
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-colors ${
+                  isActive
+                    ? 'text-[var(--color-brand-primary)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                }`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <div className={`p-1.5 rounded-xl flex items-center justify-center ${isActive ? 'bg-emerald-50' : 'bg-transparent'}`}>
+                  <Icon size={20} className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-semibold mt-0.5">{item.mobileLabel ?? item.label}</span>
                 
                 {isInbox && totalUnreadCount > 0 && (
-                  <div className="absolute top-1 right-2 md:-top-1 md:-right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse-subtle">
+                  <div className="absolute top-1 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse-subtle">
                     {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
                   </div>
                 )}
@@ -195,11 +232,32 @@ export default function AppShell({ children }: AppShellProps) {
             );
           })}
 
-          {/* Mobile Profile & Status -- mirrors the nav Links' flex-col
-              icon-chip + label-below structure so it lines up with them
-              instead of using ad-hoc absolute positioning for the label. */}
+          {/* Mobile "More Menu" Button */}
+          {secondaryMobileNavItems.length > 0 && (
+            <button
+              onClick={() => {
+                setShowMobileMenu(!showMobileMenu);
+                setShowStatusMenu(false);
+              }}
+              className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-colors ${
+                showMobileMenu
+                  ? 'text-[var(--color-brand-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              <div className={`p-1.5 rounded-xl flex items-center justify-center ${showMobileMenu ? 'bg-emerald-50' : 'bg-transparent'}`}>
+                <Menu size={20} className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-semibold mt-0.5">Menu</span>
+            </button>
+          )}
+
+          {/* Mobile Profile & Status */}
           <button
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
+            onClick={() => {
+              setShowStatusMenu(!showStatusMenu);
+              setShowMobileMenu(false);
+            }}
             className="flex md:hidden flex-col items-center justify-center w-14 h-14 rounded-xl text-[var(--color-text-muted)]"
           >
             <div className="relative p-1.5 rounded-xl flex items-center justify-center">
@@ -269,6 +327,34 @@ export default function AppShell({ children }: AppShellProps) {
             <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg text-left transition-colors font-medium">
               <LogOut size={14} /> Logout
             </button>
+          </div>
+        )}
+
+        {/* Mobile pop-up menu for extra navigation items */}
+        {showMobileMenu && (
+          <div className="md:hidden absolute bottom-20 left-1/2 -translate-x-1/2 bg-white border border-gray-200 shadow-2xl rounded-2xl p-2 flex flex-col w-56 z-50">
+            <div className="px-3 py-2 border-b border-gray-100 mb-1">
+              <p className="text-xs font-bold text-gray-800">Menu</p>
+            </div>
+            {secondaryMobileNavItems.map((item) => {
+              const isActive = pathname?.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setShowMobileMenu(false)}
+                  className={`flex items-center gap-3 px-3 py-3 text-sm rounded-lg text-left transition-colors font-medium ${
+                    isActive 
+                      ? 'bg-emerald-50 text-[var(--color-brand-primary)]' 
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={18} className={isActive ? 'text-[var(--color-brand-primary)]' : 'text-gray-500'} />
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         )}
       </nav>
