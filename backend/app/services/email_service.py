@@ -42,8 +42,11 @@ class EmailService:
             sg = SendGridAPIClient(api_key)
             sg.send(message)
             return True
-        except Exception:
-            logger.exception("Failed to send welcome email to %s", to_email)
+        except Exception as e:
+            error_details = getattr(e, 'body', None) or str(e)
+            status_code = getattr(e, 'status_code', None)
+            logger.error("Failed to send welcome email to %s. Status: %s, Details: %s", to_email, status_code, error_details)
+            logger.exception(e)
             return False
 
     @staticmethod
@@ -78,6 +81,9 @@ class EmailService:
             sg = SendGridAPIClient(api_key)
             sg.send(message)
             return True
-        except Exception:
-            logger.exception("Failed to send password reset email to %s", to_email)
+        except Exception as e:
+            error_details = getattr(e, 'body', None) or str(e)
+            status_code = getattr(e, 'status_code', None)
+            logger.error("Failed to send password reset email to %s. Status: %s, Details: %s", to_email, status_code, error_details)
+            logger.exception(e)
             return False
