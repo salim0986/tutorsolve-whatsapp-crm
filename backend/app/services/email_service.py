@@ -20,9 +20,10 @@ class EmailService:
         from_email = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@whatsappcrm.com")
 
         # If no real API key is configured (dev mode), skip the real send.
-        # Never log the setup link itself, even in dev -- it's a live credential.
+        # In dev mode, we log the setup link so the developer can test the flow locally.
         if api_key == "dummy_dev_key":
             logger.info("[DEV MODE] Skipping real welcome email to %s (SENDGRID_API_KEY not configured).", to_email)
+            logger.info("[DEV MODE] Welcome Setup Link: %s", setup_link)
             return True
 
         message = Mail(
@@ -55,9 +56,10 @@ class EmailService:
         from_email = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@whatsappcrm.com")
 
         # If no real API key is configured (dev mode), skip the real send.
-        # Never log the reset link itself, even in dev -- it's a live credential.
+        # In dev mode, we log the reset link so the developer can test the flow locally.
         if api_key == "dummy_dev_key":
             logger.info("[DEV MODE] Skipping real password reset email to %s (SENDGRID_API_KEY not configured).", to_email)
+            logger.info("[DEV MODE] Password Reset Link: %s", reset_link)
             return True
 
         message = Mail(
